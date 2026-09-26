@@ -237,3 +237,5 @@ Deployment (Vercel & Supabase / Neon PostgreSQL)
    - `JWT_SECRET`: A secure random secret string.
    - `NEXT_PUBLIC_SUPPORT_PHONE`: `+970553071353`
 4. **Deploy:** Connect your GitHub repository to Vercel. Automatic builds will run upon every `git push`.
+
+<!-- build trigger: ensure Vercel deploys the latest commit with login/admin/API routes -->
