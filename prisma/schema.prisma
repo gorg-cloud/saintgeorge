@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Three account kinds, expressed with role + assignedGroup:
+///   "KHADIM" + group     -> Group Khadem  (one group only)
+///   "ADMIN"  + no group  -> Master Admin  (everything, no group of their own)
+///   "ADMIN"  + group     -> Group Admin   (everything, plus their own group)
+model User {
+  id             Int      @id @default(autoincrement())
+  username       String   @unique
+  passcode       String
+  role           String   // "ADMIN" | "KHADIM"
+  assignedGroup  String?  // "Group 1" to "Group 10", null for a Master Admin
+  assistantName  String?
+  assistantPhone String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("users")
+}
+
+/// A Sunday School group.
+///
+/// The name IS the group: an admin types the Khodam's name when creating it,
+/// and that same string is what every student row stores in `assignedGroup`.
+/// Groups therefore have no accounts and no login of their own — the admin
+/// creates them, names them and places children into them.
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("groups")
+}
+
+model Student {
+  id            Int                @id @default(autoincrement())
+  fullName      String
+  dob           String?            // Date of birth
+  motherName    String?            // Mother's name
+  motherPhone   String?            // Mother's phone
+  fatherPhone   String?            // Father's phone
+  childPhone    String?            // Child's phone (if available)
+  address       String?            // Detailed address
+  schoolName    String?            // School name
+  /// The name of a `Group` row (the Khodam's name), or null while the child is
+  /// still unplaced — every child is the same age, so groups are decided by the
+  /// Khuddam, never guessed from a date of birth, a school grade or a headcount.
+  ///
+  /// Stored as the group's name rather than a foreign key so that renaming a
+  /// group is a single transaction and every existing roster filter, export and
+  /// calendar lookup keeps working unchanged.
+  assignedGroup String?
+  photoUrl      String?            // Profile image / base64
+  notes         String?            // Special notes / medical
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  attendance    AttendanceRecord[]
+
+  @@map("students")
+}
+
+model AttendanceRecord {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  sessionDate String   // Format: YYYY-MM-DD
+  status      String   // "PRESENT" | "ABSENT"
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, sessionDate])
+  @@map("attendance_records")
+}
