@@ -143,7 +143,86 @@ students it creates, so it can be run repeatedly without polluting the roster.
 
 ---
 
-## 🌐 Production Deployment (Vercel & Supabase / Neon PostgreSQL)
+
+---
+
+## 🚀 First Deploy (one-time setup)
+
+### 1. Create a Supabase PostgreSQL database
+
+1. Go to **[supabase.com](https://supabase.com)** → **New Project**
+2. Name it `saintgeorge` (or anything), set a **database password** (write it down)
+3. Pick a region close to you / your students, keep the **Free** plan
+4. Wait ~2 minutes for the project to be ready
+5. In the project, go to **Settings → Database → Connection string**
+6. Copy the **"Transaction SQL"** string — it looks like:
+
+   ```
+   postgresql://postgres:[your-password]@db.[project-id].supabase.co:5432/postgres?sslmode=require
+   ```
+
+### 2. Add environment variables in Vercel
+
+In your Vercel project → **Settings → Environment Variables → Add**:
+
+| Name | Value | Scope |
+|---|---|---|
+| `DATABASE_URL` | the Supabase connection string from step 1 | Production + Preview |
+| `JWT_SECRET` | a long random string (e.g. `sk-` + 32 hex chars) | Production + Preview |
+| `NEXT_PUBLIC_SUPPORT_PHONE` | `+970553071353` (optional — already hardcoded in the app UI) | Production + Preview |
+
+### 3. Create the tables + admin account (run ONCE from your machine)
+
+On **your own machine**, create a `.env` file in the project root with:
+
+```env
+DATABASE_URL="postgresql://postgres:[your-password]@db.[project-id].supabase.co:5432/postgres?sslmode=require"
+JWT_SECRET="sk-your-random-secret-here"
+NEXT_PUBLIC_SUPPORT_PHONE="+970553071353"
+```
+
+Then run:
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+- `db:push` creates all the tables in your Supabase Postgres (safe to re-run — no-op if they already exist)
+- `db:seed` inserts the admin account **and nothing else** (clean slate: no groups, no children)
+
+> **Important:** `db:seed` does a full clean-slate wipe each time it runs (it deletes all groups, children and attendance records before inserting). Only run it when you want a fresh start — **not** as a recurring deploy step. The admin account persists across deploys once created.
+
+### 4. Sign in
+
+Open **saintgeorge.vercel.app** → click **Staff Gateway** → sign in with:
+
+| | |
+|---|---|
+| **Username** | `grade5boys` |
+| **Password** | `saintgeorge` |
+
+You'll land on the empty admin dashboard. From there:
+- Add Khodam groups in the **Groups** tab (the group takes the Khodam's name)
+- Place children, print the per-group PDF sheet, export Excel, etc.
+
+### Project structure (committed)
+
+- `prisma/schema.prisma` — PostgreSQL schema (User, Group, Student, AttendanceRecord)
+- `prisma/seed.ts` — seeds only the admin account (`grade5boys` / `saintgeorge`, bcrypt-hashed)
+- `src/` — Next.js app (App Router, TypeScript, Tailwind)
+- `scripts/test-e2e.ts` — E2E test suite
+- `.env.example` — env var template (never commit `.env`)
+
+### Environment variables (summary)
+
+| Variable | Required? | Description |
+|---|---|---|
+| `DATABASE_URL` | ✅ Yes | Supabase PostgreSQL connection string |
+| `JWT_SECRET` | ✅ Yes (recommended) | Session signing secret — if omitted, the app falls back to a public default (not recommended for production) |
+| `NEXT_PUBLIC_SUPPORT_PHONE` | ❌ No | Support phone shown in the UI — already hardcoded, but set here to change it without a redeploy |
+
+Deployment (Vercel & Supabase / Neon PostgreSQL)
 
 1. **Database:** Create a PostgreSQL database on [Supabase](https://supabase.com) or [Neon](https://neon.tech).
 2. **Switch Prisma Provider:** Update `prisma/schema.prisma` datasource:
