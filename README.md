@@ -115,7 +115,7 @@ npm install
 ### 2. Environment Variables
 Copy `.env.example` to `.env`:
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require"  # Supabase / Neon PostgreSQL
 JWT_SECRET="khodam-sunday-school-secret-key-2026-super-secure"
 NEXT_PUBLIC_SUPPORT_PHONE="+970553071353"
 ```
