@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { Info, Image as ImageIcon, Phone, CheckCircle, XCircle } from "lucide-react";
 import { groupLabel } from "@/lib/groupLabels";
+import { StudentAvatar } from "./StudentAvatar";
 
 interface KhademRosterCardProps {
   student: any;
@@ -67,16 +68,15 @@ export function KhademRosterCard({
         {/* Avatar */}
         <button
           onClick={() => onOpenPic(student)}
-          className="relative h-13 w-13 h-12 w-12 flex-shrink-0 overflow-hidden rounded-2xl border-2 border-slate-100 shadow-sm bg-slate-100 hover:opacity-90 transition"
+          className="cursor-pointer transition hover:opacity-90"
           title="View Student Pic"
         >
-          {student.photoUrl ? (
-            <img src={student.photoUrl} alt={student.fullName} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center font-bold text-slate-500 text-sm">
-              {student.fullName.slice(0, 2)}
-            </div>
-          )}
+          <StudentAvatar
+            photoUrl={student.photoUrl}
+            fullName={student.fullName}
+            className="h-12 w-12 rounded-2xl border-2 border-slate-100 shadow-xs"
+            textClassName="text-sm font-bold text-slate-500"
+          />
         </button>
 
         <div className="min-w-0 flex-1">

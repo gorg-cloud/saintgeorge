@@ -18,6 +18,7 @@ import {
 import { formatDisplayDate, getTodaySessionDate } from "@/lib/date";
 import { UNASSIGNED, groupLabel, isUnassigned } from "@/lib/groupLabels";
 import { useGroups } from "@/lib/useGroups";
+import { StudentAvatar } from "./StudentAvatar";
 
 interface SundayAttendanceCalendarProps {
   userRole?: string;
@@ -345,15 +346,12 @@ export function SundayAttendanceCalendar({ userRole, userGroup }: SundayAttendan
                       <td className="p-3.5 text-center text-slate-400 font-mono">{idx + 1}</td>
                       <td className="p-3.5 font-bold text-slate-900">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-full overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200">
-                            {s.photoUrl ? (
-                              <img src={s.photoUrl} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center font-bold text-[10px] text-slate-500">
-                                {s.fullName.slice(0, 2)}
-                              </span>
-                            )}
-                          </div>
+                          <StudentAvatar
+                            photoUrl={s.photoUrl}
+                            fullName={s.fullName}
+                            className="h-8 w-8 rounded-full border border-slate-200"
+                            textClassName="text-[10px] font-bold text-slate-500"
+                          />
                           <span>{s.fullName}</span>
                         </div>
                       </td>

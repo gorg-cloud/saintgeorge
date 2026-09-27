@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/i18n/context";
 import { CheckCircle2, Upload, Loader2, Check, Users, AlertCircle, PhoneCall } from "lucide-react";
 import { isUnassigned } from "@/lib/groupLabels";
 import { useGroups } from "@/lib/useGroups";
+import { compressImageFile } from "@/lib/imageUtils";
 
 interface RegistrationFormProps {
   onSuccessRedirect?: () => void;
@@ -63,16 +64,16 @@ export function RegistrationForm({ onSuccessRedirect, mode = "public" }: Registr
   };
 
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPhotoPreview(base64String);
-        setFormData((prev) => ({ ...prev, photoUrl: base64String }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await compressImageFile(file);
+        setPhotoPreview(compressed);
+        setFormData((prev) => ({ ...prev, photoUrl: compressed }));
+      } catch (err) {
+        console.error("Failed to process image:", err);
+      }
     }
   };
 

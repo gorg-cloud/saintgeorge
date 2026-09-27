@@ -7,6 +7,7 @@ import { StudentInfoModal } from "./StudentInfoModal";
 import { StudentPicModal } from "./StudentPicModal";
 import { UNASSIGNED, isUnassigned } from "@/lib/groupLabels";
 import { useGroups } from "@/lib/useGroups";
+import { StudentAvatar } from "./StudentAvatar";
 
 interface AdminStudentDirectoryProps {
   students: any[];
@@ -162,15 +163,15 @@ export function AdminStudentDirectory({
                   <div className="flex items-center gap-2.5">
                     <button
                       onClick={() => setSelectedStudentForPic(s)}
-                      className="h-8 w-8 rounded-full overflow-hidden bg-slate-200 flex-shrink-0 border border-slate-200 cursor-pointer"
+                      className="cursor-pointer transition hover:opacity-80"
+                      title="View Photo"
                     >
-                      {s.photoUrl ? (
-                        <img src={s.photoUrl} alt={s.fullName} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center font-bold text-[10px] text-slate-500">
-                          {s.fullName.slice(0, 2)}
-                        </span>
-                      )}
+                      <StudentAvatar
+                        photoUrl={s.photoUrl}
+                        fullName={s.fullName}
+                        className="h-8 w-8 rounded-full border border-slate-200"
+                        textClassName="text-[10px] font-bold text-slate-500"
+                      />
                     </button>
                     <span className="font-bold text-slate-900">{s.fullName}</span>
                   </div>
@@ -286,6 +287,9 @@ export function AdminStudentDirectory({
         <StudentPicModal
           student={selectedStudentForPic}
           onClose={() => setSelectedStudentForPic(null)}
+          onUpdateSuccess={() => {
+            onRefresh();
+          }}
         />
       )}
     </div>

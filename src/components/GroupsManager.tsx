@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { useLanguage } from "@/lib/i18n/context";
 import { useGroups } from "@/lib/useGroups";
 import { isUnassigned } from "@/lib/groupLabels";
+import { StudentAvatar } from "./StudentAvatar";
 import {
   Plus,
   Printer,
@@ -363,18 +364,12 @@ export function GroupsManager({ students, onRefresh }: GroupsManagerProps) {
                 className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-2.5">
-                  {child.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={child.photoUrl}
-                      alt={child.fullName}
-                      className="h-9 w-9 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-bold text-slate-500">
-                      {child.fullName.slice(0, 2)}
-                    </div>
-                  )}
+                  <StudentAvatar
+                    photoUrl={child.photoUrl}
+                    fullName={child.fullName}
+                    className="h-9 w-9 rounded-lg"
+                    textClassName="text-[11px] font-bold text-slate-500"
+                  />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-900">{child.fullName}</p>
                     {child.motherPhone && (

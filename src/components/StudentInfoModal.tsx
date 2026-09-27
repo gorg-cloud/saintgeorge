@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useLanguage } from "@/lib/i18n/context";
-import { X, User, Phone, MapPin, School, Calendar, FileText, Edit2, Check, ShieldAlert } from "lucide-react";
+import { X, User, Phone, MapPin, School, Calendar, FileText, Edit2, Check, Upload, Trash2 } from "lucide-react";
 import { groupLabel } from "@/lib/groupLabels";
 import { useGroups } from "@/lib/useGroups";
+import { compressImageFile } from "@/lib/imageUtils";
+import { StudentAvatar } from "@/components/StudentAvatar";
 
 interface StudentInfoModalProps {
   student: any;
@@ -14,12 +16,25 @@ interface StudentInfoModalProps {
 
 export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentInfoModalProps) {
   const { t, isRtl, lang } = useLanguage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ ...student });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   // Groups are admin-defined (named after a Khodam).
   const { names: groupNames } = useGroups();
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await compressImageFile(file);
+      setFormData((prev: any) => ({ ...prev, photoUrl: base64 }));
+    } catch (err) {
+      console.error("Failed to process image:", err);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentI
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white transition"
+            className="rounded-lg p-1.5 text-white/80 hover:bg-white/10 hover:text-white transition cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -86,6 +101,47 @@ export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentI
 
           {isEditing ? (
             <form onSubmit={handleSave} className="space-y-4">
+              {/* Photo Edit Section */}
+              <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <StudentAvatar
+                  photoUrl={formData.photoUrl}
+                  fullName={formData.fullName}
+                  className="h-16 w-16 rounded-2xl border-2 border-coptic-blue shadow-xs"
+                />
+                <div className="flex flex-col gap-1.5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 rounded-lg bg-coptic-blue px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-800 transition cursor-pointer"
+                    >
+                      <Upload className="h-3.5 w-3.5 text-amber-300" />
+                      <span>{formData.photoUrl ? (isRtl ? "تغيير الصورة" : "Change Photo") : (isRtl ? "رفع صورة" : "Upload Photo")}</span>
+                    </button>
+                    {formData.photoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev: any) => ({ ...prev, photoUrl: null }))}
+                        className="flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>{isRtl ? "إزالة" : "Remove"}</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {isRtl ? "يمكنك رفع صورة جديدة لحفظها لهذا الطالب" : "Upload a new photo for this student"}
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-slate-700 mb-1">{t.fullNameLabel}</label>
@@ -200,16 +256,16 @@ export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentI
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                 >
-                  Cancel
+                  {isRtl ? "إلغاء" : "Cancel"}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-coptic-blue px-5 py-2 text-xs font-bold text-white hover:bg-blue-800 transition"
+                  className="rounded-xl bg-coptic-blue px-5 py-2 text-xs font-bold text-white hover:bg-blue-800 transition cursor-pointer disabled:opacity-50"
                 >
-                  {saving ? "Saving..." : t.saveChanges}
+                  {saving ? (isRtl ? "جاري الحفظ..." : "Saving...") : t.saveChanges}
                 </button>
               </div>
             </form>
@@ -217,22 +273,22 @@ export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentI
             <div className="space-y-6">
               {/* Profile Top Card */}
               <div className="flex flex-col sm:flex-row items-center gap-4 rounded-2xl bg-slate-50 p-4 border border-slate-200/80">
-                <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-coptic-blue bg-slate-200 flex-shrink-0">
-                  {student.photoUrl ? (
-                    <img src={student.photoUrl} alt={student.fullName} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center font-bold text-slate-500">
-                      {student.fullName.slice(0, 2)}
-                    </div>
-                  )}
-                </div>
+                <StudentAvatar
+                  photoUrl={student.photoUrl}
+                  fullName={student.fullName}
+                  className="h-16 w-16 rounded-full border-2 border-coptic-blue shadow-xs"
+                  textClassName="text-sm font-bold text-slate-500"
+                />
                 <div className="text-center sm:text-start flex-1">
                   <h4 className="text-lg font-bold text-slate-900">{student.fullName}</h4>
                   <p className="text-xs text-slate-600">{groupLabel(student.assignedGroup, lang)}</p>
                 </div>
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-coptic-blue hover:bg-blue-50 transition"
+                  onClick={() => {
+                    setFormData({ ...student });
+                    setIsEditing(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-coptic-blue hover:bg-blue-50 transition cursor-pointer"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   <span>{t.editStudent}</span>
@@ -283,57 +339,49 @@ export function StudentInfoModal({ student, onClose, onUpdateSuccess }: StudentI
                         {student.childPhone}
                       </a>
                     ) : (
-                      isRtl ? "غير متوفر" : "None"
+                      "-"
                     )}
                   </p>
                 </div>
-
-                <div className="rounded-2xl border border-slate-200 p-4 space-y-1">
-                  <p className="text-xs font-medium text-slate-500">{t.dobLabel}</p>
-                  <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    {student.dob || "-"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 p-4 space-y-1">
-                  <p className="text-xs font-medium text-slate-500">{t.schoolNameLabel}</p>
-                  <p className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <School className="h-3.5 w-3.5 text-slate-400" />
-                    {student.schoolName || "-"}
-                  </p>
-                </div>
-
               </div>
 
-              {/* Address */}
-              <div className="rounded-2xl border border-slate-200 p-4 space-y-1">
-                <p className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{t.addressLabel}</span>
-                </p>
-                <p className="text-sm font-semibold text-slate-800">{student.address || "-"}</p>
-              </div>
+              {/* Details List */}
+              <div className="space-y-3 rounded-2xl border border-slate-200 p-4 text-xs">
+                <div className="flex items-start gap-2 text-slate-600">
+                  <Calendar className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <span className="font-semibold">{t.dobLabel}:</span>
+                  <span className="text-slate-800 font-bold">{student.dob || "-"}</span>
+                </div>
 
-              {/* Notes */}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 space-y-1">
-                <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-amber-600" />
-                  <span>{t.notesLabel}</span>
-                </p>
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  {student.notes || t.noNotes}
-                </p>
+                <div className="flex items-start gap-2 text-slate-600">
+                  <School className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <span className="font-semibold">{t.schoolNameLabel}:</span>
+                  <span className="text-slate-800 font-bold">{student.schoolName || "-"}</span>
+                </div>
+
+                <div className="flex items-start gap-2 text-slate-600">
+                  <MapPin className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                  <span className="font-semibold">{t.addressLabel}:</span>
+                  <span className="text-slate-800 font-bold">{student.address || "-"}</span>
+                </div>
+
+                {student.notes && (
+                  <div className="flex items-start gap-2 text-slate-600 border-t pt-3 mt-3">
+                    <FileText className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <span className="font-semibold">{t.notesLabel}:</span>
+                    <span className="text-slate-800 font-medium">{student.notes}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex justify-end">
+        <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-xl bg-slate-800 px-6 py-2.5 text-xs font-bold text-white hover:bg-slate-900 transition"
+            className="rounded-xl bg-slate-800 px-5 py-2 text-xs font-bold text-white hover:bg-slate-900 transition cursor-pointer"
           >
             {t.closeModal}
           </button>
